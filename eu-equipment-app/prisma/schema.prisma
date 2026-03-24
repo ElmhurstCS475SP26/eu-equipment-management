@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  clerkId      String        @unique
+  name         String
+  email        String        @unique
+  role         String        @default("student") // student | staff | admin
+  reservations Reservation[]
+  checkouts    Checkout[]
+  createdAt    DateTime      @default(now())
+}
+
+model Item {
+  id           Int           @id @default(autoincrement())
+  name         String
+  barcode      String        @unique
+  category     String
+  status       String        @default("available") // available | checked_out | flagged
+  description  String?
+  imageUrl     String?
+  kitId        Int?
+  kit          Kit?          @relation(fields: [kitId], references: [id])
+  reservations Reservation[]
+  checkouts    Checkout[]
+  flags        Flag[]
+  createdAt    DateTime      @default(now())
+}
+
+model Kit {
+  id        Int      @id @default(autoincrement())
+  name      String
+  items     Item[]
+  createdAt DateTime @default(now())
+}
+
+model Reservation {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  itemId    Int
+  item      Item     @relation(fields: [itemId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("pending") // pending | approved | cancelled | completed
+  createdAt DateTime @default(now())
+}
+
+model Checkout {
+  id             Int       @id @default(autoincrement())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  itemId         Int
+  item           Item      @relation(fields: [itemId], references: [id])
+  checkedOutAt   DateTime  @default(now())
+  dueDate        DateTime
+  returnedAt     DateTime?
+  contractPdfUrl String?
+}
+
+model Flag {
+  id        Int      @id @default(autoincrement())
+  itemId    Int
+  item      Item     @relation(fields: [itemId], references: [id])
+  reason    String
+  notes     String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
