@@ -1,3 +1,7 @@
+
+# clerk configuration (can include secrets)
+/.clerk/
+
 # Dependencies
 node_modules/
 /.pnp
@@ -23,6 +27,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Local env files
+.env
 .env*.local
 
 # Vercel
@@ -31,6 +36,3 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
-
-# Clerk
-/.clerk/
