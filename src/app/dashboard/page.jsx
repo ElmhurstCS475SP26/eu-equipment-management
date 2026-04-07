@@ -1,9 +1,215 @@
-// src/app/dashboard/page.jsx
-export default function DashboardPage() {
+"use client";
+
+import Link from "next/link";
+import { Calendar, Clock, AlertCircle, Video, Mic, Lightbulb, Camera, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { equipmentData, reservationsData } from "@/data/mockData";
+
+export default function Dashboard() {
+  const activeReservations = reservationsData ? reservationsData.filter((r) => r.status === "Active") : [];
+  const upcomingReservations = reservationsData ? reservationsData.filter((r) => r.status === "Upcoming") : [];
+
+  // Mock user data
+  const firstName = 'Demo';
+
+  const featuredCategories = [
+    {
+      name: "DSLR Cameras",
+      icon: Camera,
+      count: 3,
+      available: 2,
+      color: "bg-blue-100 text-blue-600",
+      link: "/catalog?category=Cameras",
+    },
+    {
+      name: "Cinema Cameras",
+      icon: Video,
+      count: 2,
+      available: 0,
+      color: "bg-purple-100 text-purple-600",
+      link: "/catalog?category=Cameras",
+    },
+    {
+      name: "Microphones",
+      icon: Mic,
+      count: 5,
+      available: 4,
+      color: "bg-green-100 text-green-600",
+      link: "/catalog?category=Audio Equipment",
+    },
+    {
+      name: "Lighting Kits",
+      icon: Lightbulb,
+      count: 4,
+      available: 3,
+      color: "bg-yellow-100 text-yellow-600",
+      link: "/catalog?category=Lighting Equipment",
+    },
+  ];
+
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Coming soon.</p>
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
+      {/* Welcome Section */}
+      <div>
+        <h1 className="text-3xl font-bold">Welcome back, {firstName}!</h1>
+        <p className="text-gray-600 mt-1">Here's what's happening with your equipment reservations.</p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Active Reservations</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeReservations.length}</div>
+            <p className="text-xs text-gray-500 mt-1">Currently checked out</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Upcoming Pickups</CardTitle>
+            <Clock className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{upcomingReservations.length}</div>
+            <p className="text-xs text-gray-500 mt-1">Ready to pick up</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Overdue Equipment</CardTitle>
+            <AlertCircle className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-gray-500 mt-1">All on time</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Featured Equipment */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold">Featured Equipment</h2>
+          <Link href="/catalog">
+            <Button variant="ghost" className="gap-2">
+              View All
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {featuredCategories.map((category) => {
+            const Icon = category.icon;
+            return (
+              <Link key={category.name} href={category.link}>
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardContent className="p-6">
+                    <div className={`h-12 w-12 rounded-lg ${category.color} flex items-center justify-center mb-4`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-semibold mb-1">{category.name}</h3>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Badge variant={category.available > 0 ? "default" : "secondary"} className={category.available > 0 ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}>
+                        {category.available}/{category.count} Available
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* My Active Reservations */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold">My Reservations</h2>
+          <Link href="/reservations">
+            <Button variant="ghost" className="gap-2">
+              View All
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+        {activeReservations.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {activeReservations.map((reservation) => (
+              <Card key={reservation.id}>
+                <CardHeader>
+                  <img
+                    src={reservation.equipmentImage}
+                    alt={reservation.equipmentName}
+                    className="w-full h-40 object-cover rounded-lg mb-3"
+                  />
+                  <CardTitle className="text-lg">{reservation.equipmentName}</CardTitle>
+                  <CardDescription>ID: {reservation.equipmentId_full}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-600">
+                      Pickup: {new Date(reservation.pickupDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-600">
+                      Return: {new Date(reservation.returnDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 mt-2">
+                    {reservation.status}
+                  </Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Calendar className="h-12 w-12 text-gray-300 mb-4" />
+              <p className="text-gray-500 mb-4">No active reservations</p>
+              <Link href="/catalog">
+                <Button className="bg-blue-600 hover:bg-blue-700">Browse Equipment</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Upcoming Reservations */}
+      {upcomingReservations.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Upcoming Pickups</h2>
+          <div className="space-y-3">
+            {upcomingReservations.map((reservation) => (
+              <Card key={reservation.id}>
+                <CardContent className="flex items-center gap-4 p-4">
+                  <img
+                    src={reservation.equipmentImage}
+                    alt={reservation.equipmentName}
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{reservation.equipmentName}</h3>
+                    <p className="text-sm text-gray-600">
+                      Pickup: {new Date(reservation.pickupDate).toLocaleDateString()} at{" "}
+                      {new Date(reservation.pickupDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <Badge variant="secondary">Upcoming</Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

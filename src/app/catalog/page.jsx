@@ -1,18 +1,18 @@
-// src/app/inventory/page.jsx
 "use client";
-import { useState } from "react";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Badge } from "../../components/ui/badge";
-import { Checkbox } from "../../components/ui/checkbox";
-import { Label } from "../../components/ui/label";
-import { equipmentData } from "../data/mockData";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "../../components/ui/sheet";
-import Link from "next/link";
 
-export default function InventoryPage() {
+import { useState } from "react";
+import Link from "next/link";
+import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { equipmentData } from "@/data/mockData";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+
+export default function EquipmentCatalog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedAvailability, setSelectedAvailability] = useState([]);
@@ -135,6 +135,7 @@ export default function InventoryPage() {
             className="pl-10"
           />
         </div>
+
         {/* Mobile Filter */}
         <Sheet>
           <SheetTrigger asChild>
@@ -211,7 +212,7 @@ export default function InventoryPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="p-4 pt-0">
-                    <Link href={`/inventory/${item.id}`} className="w-full">
+                    <Link href={`/equipment/${item.id}`} className="w-full">
                       <Button
                         className="w-full bg-blue-600 hover:bg-blue-700"
                         disabled={item.availability !== "Available"}
