@@ -1,5 +1,5 @@
 // Login Page - Default Landing Page
-"use client";
+/*use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -58,7 +58,7 @@ export default function Login() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Demo Credentials Alert */}
+          {/* Demo Credentials Alert }
           <Alert className="mb-4 border-blue-200 bg-blue-50">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-sm">
@@ -135,7 +135,7 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* Create Account Button */}
+          {/* Create Account Button }
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
@@ -156,6 +156,44 @@ export default function Login() {
           </p>
         </CardFooter>
       </Card>
+    </div>
+  );
+}*/
+
+// Login Page - Default Landing Page
+"use client";
+
+import { SignIn, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function HomePage() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    const role = user?.publicMetadata?.role;
+
+    if (role === "admin") {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard");
+    }
+  }, [isLoaded, isSignedIn, user, router]);
+
+  if (!isLoaded) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (isSignedIn) {
+    return <div className="p-6">Redirecting...</div>;
+  }
+
+  return (
+    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-slate-50 p-4">
+      <SignIn routing="hash" />
     </div>
   );
 }

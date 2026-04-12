@@ -5,22 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, Mail, Shield, Edit, Calendar, Clock } from "lucide-react";
 import { reservationsData } from "@/data/mockData";
-
-// Mock User Data
-const user = {
-  fullName: "Demo Student",
-  primaryEmailAddress: { emailAddress: "demo@elmhurst.edu" },
-  createdAt: new Date("2024-01-10T00:00:00Z").toISOString(),
-};
+import { useUser } from "@clerk/nextjs";
 
 export default function Profile() {
+  const { user } = useUser();
   const userReservations = reservationsData ? reservationsData.filter(r => r.status === "Active" || r.status === "Upcoming" || r.status === "Pending") : [];
 
   const getUserInitials = () => {
-    return user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    if (!user || (!user.fullName && !user.firstName)) return "U";
+    const nameToUse = user.fullName || user.firstName || "User";
+    return nameToUse.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-  const role = 'student';
+  const role = (user?.publicMetadata?.role) || 'student';
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
