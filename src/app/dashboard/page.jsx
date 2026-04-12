@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { Calendar, Clock, AlertCircle, Video, Mic, Lightbulb, Camera, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,8 @@ export default function Dashboard() {
   const activeReservations = reservationsData ? reservationsData.filter((r) => r.status === "Active") : [];
   const upcomingReservations = reservationsData ? reservationsData.filter((r) => r.status === "Upcoming") : [];
 
-  // Mock user data
-  const firstName = 'Demo';
+  const { user } = useUser();
+  const firstName = user?.firstName || 'User';
 
   const featuredCategories = [
     {
