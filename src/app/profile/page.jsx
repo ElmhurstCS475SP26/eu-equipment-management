@@ -1,16 +1,14 @@
-"use client";
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Shield, Edit, Calendar, Clock } from "lucide-react";
-import { reservationsData } from "@/data/mockData";
-import { useUser } from "@clerk/nextjs";
+import { User, Mail, Shield, Calendar, Clock, List } from "lucide-react";
+import { currentUser } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/db";
 
-export default function Profile() {
-  const { user } = useUser();
-  const userReservations = reservationsData ? reservationsData.filter(r => r.status === "Active" || r.status === "Upcoming" || r.status === "Pending") : [];
+export const dynamic = "force-dynamic";
 
+export default async function Profile() {
+  const user = await currentUser();
+  
   const getUserInitials = () => {
     if (!user || (!user.fullName && !user.firstName)) return "U";
     const nameToUse = user.fullName || user.firstName || "User";
@@ -18,6 +16,35 @@ export default function Profile() {
   };
 
   const role = (user?.publicMetadata?.role) || 'student';
+
+  let reservationsData = [];
+  if (user) {
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId: user.id },
+      include: {
+        reservations: {
+          include: { item: true },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (dbUser) {
+      reservationsData = dbUser.reservations.map(r => ({
+        id: r.id,
+        status: r.status === "pending" ? "Pending" : r.status === "approved" || r.status === "active" ? "Active" : r.status === "completed" || r.status === "returned" ? "Completed" : "Cancelled",
+        pickupDate: r.startDate,
+        returnDate: r.endDate,
+        equipmentName: r.item.name,
+      }));
+    }
+  }
+
+  const userReservations = reservationsData.filter(r => r.status === "Active" || r.status === "Upcoming" || r.status === "Pending");
+  const pendingCount = reservationsData.filter(r => r.status === "Pending").length;
+  const activeCount = reservationsData.filter(r => r.status === "Active").length;
+  // Let "Upcoming" just be another word for pending for now, or approved but in future. 
+  const upcomingCount = pendingCount; 
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
@@ -35,10 +62,6 @@ export default function Profile() {
                 <CardTitle>Profile Information</CardTitle>
                 <CardDescription>Your personal details and account information</CardDescription>
               </div>
-              {/*<Button className="gap-2 bg-blue-600 hover:bg-blue-700">
-                <Edit className="h-4 w-4" />
-                Edit Profile
-              </Button>*/}
             </div>
           </CardHeader>
           <CardContent>
@@ -118,7 +141,7 @@ export default function Profile() {
                   <span className="text-sm">Pending</span>
                 </div>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {reservationsData ? reservationsData.filter(r => r.status === "Pending").length : 0}
+                  {pendingCount}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
@@ -127,7 +150,7 @@ export default function Profile() {
                   <span className="text-sm">Active Reservations</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
-                  {reservationsData ? reservationsData.filter(r => r.status === "Active").length : 0}
+                  {activeCount}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
@@ -136,16 +159,16 @@ export default function Profile() {
                   <span className="text-sm">Upcoming Pickups</span>
                 </div>
                 <p className="text-2xl font-bold text-green-600">
-                  {reservationsData ? reservationsData.filter(r => r.status === "Upcoming").length : 0}
+                  {upcomingCount}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 text-gray-600 mb-2">
-                  <Calendar className="h-4 w-4" />
+                  <List className="h-4 w-4" />
                   <span className="text-sm">Total Reservations</span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {reservationsData ? reservationsData.length : 0}
+                  {reservationsData.length}
                 </p>
               </div>
             </div>
@@ -180,6 +203,9 @@ export default function Profile() {
                     </Badge>
                   </div>
                 ))}
+                {userReservations.length === 0 && (
+                  <p className="text-sm text-gray-500">No active or pending reservations.</p>
+                )}
               </div>
             </CardContent>
           </Card>

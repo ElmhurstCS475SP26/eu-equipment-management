@@ -1,19 +1,27 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Package, Info, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { equipmentData } from "@/data/mockData";
+import { prisma } from "@/lib/db";
 
-export default function EquipmentDetails() {
-  const { id } = useParams();
-  const equipment = equipmentData.find((item) => item.id === id);
+// Opt out of static side generation for up-to-date DB fetches
+export const dynamic = "force-dynamic";
 
-  if (!equipment) {
+export default async function EquipmentDetails({ params }) {
+  const { id } = await params;
+
+  let dbItem;
+  try {
+    dbItem = await prisma.item.findUnique({
+      where: { id: parseInt(id, 10) },
+    });
+  } catch (error) {
+    dbItem = null;
+  }
+
+  if (!dbItem) {
     return (
       <div className="container mx-auto p-4 md:p-6">
         <Card>
@@ -28,6 +36,24 @@ export default function EquipmentDetails() {
       </div>
     );
   }
+
+  const equipment = {
+    id: dbItem.id.toString(),
+    name: dbItem.name,
+    category: dbItem.category,
+    brand: dbItem.brand || "",
+    model: dbItem.model || "",
+    image: dbItem.imageUrl || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
+    availability: dbItem.status === "available" ? "Available" : dbItem.status === "checked_out" ? "Reserved" : "Maintenance",
+    description: dbItem.description || "",
+    quantity: dbItem.quantity || 1,
+    quantityAvailable: dbItem.status === "available" ? (dbItem.quantity || 1) : 0,
+    condition: "Good",
+    specifications: {
+      "Barcode": dbItem.barcode || "N/A",
+      "Location": dbItem.location || "N/A",
+    }
+  };
 
   const getAvailabilityColor = (availability) => {
     switch (availability) {

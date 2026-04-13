@@ -1,19 +1,48 @@
-"use client";
-
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 import { Calendar, Clock, AlertCircle, Video, Mic, Lightbulb, Camera, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { equipmentData, reservationsData } from "@/data/mockData";
+import { prisma } from "@/lib/db";
 
-export default function Dashboard() {
-  const activeReservations = reservationsData ? reservationsData.filter((r) => r.status === "Active") : [];
-  const upcomingReservations = reservationsData ? reservationsData.filter((r) => r.status === "Upcoming") : [];
+export const dynamic = "force-dynamic";
 
-  const { user } = useUser();
+export default async function Dashboard() {
+  const user = await currentUser();
   const firstName = user?.firstName || 'User';
+
+  let activeReservations = [];
+  let upcomingReservations = [];
+
+  if (user) {
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId: user.id },
+      include: {
+        reservations: {
+          include: { item: true }
+        }
+      }
+    });
+
+    if (dbUser) {
+      const reservations = dbUser.reservations.map(r => ({
+        id: r.id,
+        status: r.status,
+        pickupDate: r.startDate,
+        returnDate: r.endDate,
+        equipmentName: r.item.name,
+        equipmentImage: r.item.imageUrl || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
+        equipmentId_full: r.item.externalId || r.item.id.toString(),
+      }));
+
+      // Map DB statuses to Dashboard display logic
+      activeReservations = reservations.filter(r => r.status === "approved" || r.status === "active");
+      upcomingReservations = reservations.filter(r => r.status === "pending");
+      
+      // Also treat overdue items as active for dashboard simplicity
+    }
+  }
 
   const featuredCategories = [
     {
@@ -187,7 +216,7 @@ export default function Dashboard() {
       {/* Upcoming Reservations */}
       {upcomingReservations.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Upcoming Pickups</h2>
+          <h2 className="text-2xl font-bold mb-4">Upcoming Pickups (Pending)</h2>
           <div className="space-y-3">
             {upcomingReservations.map((reservation) => (
               <Card key={reservation.id}>
@@ -204,7 +233,7 @@ export default function Dashboard() {
                       {new Date(reservation.pickupDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <Badge variant="secondary">Upcoming</Badge>
+                  <Badge variant="secondary" className="capitalize">{reservation.status}</Badge>
                 </CardContent>
               </Card>
             ))}
