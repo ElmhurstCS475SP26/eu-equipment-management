@@ -1,19 +1,36 @@
-"use client";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Calendar, Package, Info, AlertTriangle, ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
-import { Separator } from "../../../components/ui/separator";
-import { equipmentData } from "../../data/mockData";
+import { ArrowLeft, Calendar, Package, Info, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { prisma } from "@/lib/db";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-export default function EquipmentDetailsPage() {
-  const params = useParams();
-  const id = params?.id;
-  const equipment = equipmentData.find((item) => item.id === id);
+export const dynamic = "force-dynamic";
 
-  if (!equipment) {
+export default async function EquipmentDetails({ params }) {
+  const user = await currentUser();
+  const role = user?.publicMetadata?.role;
+  
+  // TEMPORARILY DISABLED FOR TESTING
+  // if (role !== "admin") {
+  //   redirect("/dashboard");
+  // }
+
+  const { id } = await params;
+
+  let dbItem;
+  try {
+    dbItem = await prisma.item.findUnique({
+      where: { id: parseInt(id, 10) },
+    });
+  } catch (error) {
+    dbItem = null;
+  }
+
+  if (!dbItem) {
     return (
       <div className="container mx-auto p-4 md:p-6">
         <Card>
@@ -28,6 +45,24 @@ export default function EquipmentDetailsPage() {
       </div>
     );
   }
+
+  const equipment = {
+    id: dbItem.id.toString(),
+    name: dbItem.name,
+    category: dbItem.category,
+    brand: dbItem.brand || "",
+    model: dbItem.model || "",
+    image: dbItem.imageUrl || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
+    availability: dbItem.status === "available" ? "Available" : dbItem.status === "checked_out" ? "Reserved" : "Maintenance",
+    description: dbItem.description || "",
+    quantity: dbItem.quantity || 1,
+    quantityAvailable: dbItem.status === "available" ? (dbItem.quantity || 1) : 0,
+    condition: "Good",
+    specifications: {
+      "Barcode": dbItem.barcode || "N/A",
+      "Location": dbItem.location || "N/A",
+    }
+  };
 
   const getAvailabilityColor = (availability) => {
     switch (availability) {
@@ -116,80 +151,23 @@ export default function EquipmentDetailsPage() {
               <p className="text-gray-600">{equipment.condition}</p>
             </CardContent>
           </Card>
-
-          {/* Reservation Section */}
-          {equipment.availability === "Available" ? (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  Reserve This Equipment
-                </CardTitle>
-                <CardDescription>Select your pickup and return dates</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href={`/checkout/${equipment.id}`}>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    Continue to Reservation
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Info className="h-5 w-5 text-yellow-600" />
-                  Currently Unavailable
-                </CardTitle>
-                <CardDescription>
-                  This equipment is {equipment.availability.toLowerCase()}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" variant="secondary" disabled>
-                  Not Available for Reservation
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+          
+          <Card className="border-purple-200 bg-purple-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Info className="h-5 w-5 text-purple-600" />
+                Admin Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                 <Button className="flex-1 bg-purple-600 hover:bg-purple-700" variant="solid">Edit Item</Button>
+                 <Button className="flex-1" variant="outline">View History</Button>
+              </div>
+            </CardContent>
+         </Card>
         </div>
       </div>
-
-      {/* Additional Information */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-blue-600" />
-            Equipment Policies
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">Reservation Rules</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-              <li>Equipment must be picked up during business hours (9 AM - 5 PM)</li>
-              <li>Maximum reservation period is 7 days</li>
-              <li>Valid student ID required for pickup</li>
-              <li>Equipment must be returned in the same condition</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Late Return Policy</h3>
-            <p className="text-sm text-gray-600">
-              Late returns may result in reservation restrictions. Please contact the Digital Media
-              Department if you need to extend your reservation.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Damage Responsibility</h3>
-            <p className="text-sm text-gray-600">
-              Students are responsible for any damage or loss of equipment during the reservation
-              period. Please report any issues immediately.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -18,26 +18,36 @@ model User {
 }
 
 model Item {
-  id           Int           @id @default(autoincrement())
-  name         String
-  barcode      String        @unique
-  category     String
-  status       String        @default("available") // available | checked_out | flagged
-  description  String?
-  imageUrl     String?
-  kitId        Int?
-  kit          Kit?          @relation(fields: [kitId], references: [id])
-  reservations Reservation[]
-  checkouts    Checkout[]
-  flags        Flag[]
-  createdAt    DateTime      @default(now())
+  id            Int      @id @default(autoincrement())
+  externalId    String?  @unique
+  name          String
+  barcode       String?  @unique
+  category      String
+  status        String   @default("available") // available | checked_out | flagged
+  description   String?
+  imageUrl      String?
+  brand         String?
+  model         String?
+  location      String?
+  quantity      Int?
+  kind          String?
+  cheqroomKitId String?
+  kitId         Int?
+  createdAt     DateTime @default(now())
+
+  kit           Kit?           @relation(fields: [kitId], references: [id])
+  reservations  Reservation[]
+  checkouts     Checkout[]
+  flags         Flag[]
 }
 
 model Kit {
-  id        Int      @id @default(autoincrement())
-  name      String
-  items     Item[]
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  externalId String?  @unique
+  name       String
+  status     String   @default("available")
+  items      Item[]
+  createdAt  DateTime @default(now())
 }
 
 model Reservation {

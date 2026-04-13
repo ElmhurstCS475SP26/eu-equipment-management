@@ -21,7 +21,7 @@ import {
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
-export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave }) {
+export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onDelete }) {
   const [formData, setFormData] = useState(equipment);
   const [imagePreview, setImagePreview] = useState(equipment?.image || "");
 
@@ -222,13 +222,25 @@ export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave }) {
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+        <DialogFooter className="flex w-full items-center justify-between sm:justify-between border-t border-gray-100 dark:border-zinc-800 pt-4 mt-2">
+          <Button 
+            variant="destructive" 
+            className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200 hover:border-red-300"
+            onClick={() => {
+              onOpenChange(false);
+              onDelete();
+            }}
+          >
+            Delete Equipment
           </Button>
-          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-            Save Changes
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
