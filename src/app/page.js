@@ -12,8 +12,11 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
-    const role = user?.publicMetadata?.role;
-    //const role = "admin";
+    // const role = user?.publicMetadata?.role;
+    // --- ADMIN VIEW TOGGLE (via .env) ---
+    const envRole = process.env.NEXT_PUBLIC_ENABLE_ADMIN_VIEW === "true" ? "admin" : null;
+    const role = envRole || user?.publicMetadata?.role;
+    // ------------------------------------
 
     if (role === "admin") {
       router.push("/admin");
@@ -31,8 +34,14 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-slate-50 p-4">
-      <SignIn routing="hash" />
+    <div className="flex min-h-[calc(100vh-80px)] flex-col items-center justify-center gap-4 bg-slate-50 p-4">
+      <SignIn routing="hash" signUpUrl="/sign-up" />
+      <p className="text-sm text-slate-500">
+        Don&apos;t have an account?{" "}
+        <a href="/sign-up" className="font-medium text-blue-600 hover:underline">
+          Create one here
+        </a>
+      </p>
     </div>
   );
 }

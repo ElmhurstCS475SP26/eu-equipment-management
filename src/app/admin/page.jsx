@@ -7,8 +7,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   const user = await currentUser();
-  //const role = user?.publicMetadata?.role;
-  const role = "admin";
+  // const role = user?.publicMetadata?.role;
+  // --- ADMIN VIEW TOGGLE (via .env) ---
+  const envRole = process.env.NEXT_PUBLIC_ENABLE_ADMIN_VIEW === "true" ? "admin" : null;
+  const role = envRole || user?.publicMetadata?.role;
+  // ------------------------------------
 
   if (role !== "admin") {
     redirect("/dashboard");

@@ -24,8 +24,11 @@ export default function Navbar() {
   const { user, isLoaded, isSignedIn } = useUser();
   const pathname = usePathname();
   const router = useRouter();
-  const role = user?.publicMetadata?.role;
-  //const role = "admin";
+  // const role = user?.publicMetadata?.role;
+  // --- ADMIN VIEW TOGGLE (via .env) ---
+  const envRole = process.env.NEXT_PUBLIC_ENABLE_ADMIN_VIEW === "true" ? "admin" : null;
+  const role = envRole || user?.publicMetadata?.role;
+  // ------------------------------------
   const [navSearch, setNavSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -194,11 +197,16 @@ export default function Navbar() {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 mt-2">
+            <DropdownMenuContent align="end" className="min-w-56 max-w-xs mt-2">
               <DropdownMenuLabel>
-                <div>
-                  <p className="font-medium text-base">{user?.fullName || 'User'}</p>
-                  <p className="text-sm text-gray-500">{user?.primaryEmailAddress?.emailAddress || ''}</p>
+                <div className="min-w-0">
+                  <p className="font-medium text-base truncate">{user?.fullName || 'User'}</p>
+                  <p
+                    className="text-sm text-gray-500 truncate"
+                    title={user?.primaryEmailAddress?.emailAddress || ''}
+                  >
+                    {user?.primaryEmailAddress?.emailAddress || ''}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
