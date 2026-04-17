@@ -12,11 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
-    // const role = user?.publicMetadata?.role;
-    // --- ADMIN VIEW TOGGLE (via .env) ---
-    const envRole = process.env.NEXT_PUBLIC_ENABLE_ADMIN_VIEW === "true" ? "admin" : null;
-    const role = envRole || user?.publicMetadata?.role;
-    // ------------------------------------
+    const role = user?.publicMetadata?.role;
 
     if (role === "admin") {
       router.push("/admin");

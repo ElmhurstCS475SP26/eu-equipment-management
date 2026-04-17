@@ -150,7 +150,7 @@ export default async function EquipmentDetails({ params }) {
               <p className="text-gray-600">{equipment.condition}</p>
             </CardContent>
           </Card>
-          
+
           <Card className="border-purple-200 bg-purple-50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -160,11 +160,11 @@ export default async function EquipmentDetails({ params }) {
             </CardHeader>
             <CardContent>
               <div className="flex gap-2">
-                 <Button className="flex-1 bg-purple-600 hover:bg-purple-700" variant="solid">Edit Item</Button>
-                 <Button className="flex-1" variant="outline">View History</Button>
+                <Button className="flex-1 bg-purple-600 hover:bg-purple-700" variant="solid">Edit Item</Button>
+                <Button className="flex-1" variant="outline">View History</Button>
               </div>
             </CardContent>
-         </Card>
+          </Card>
         </div>
       </div>
     </div>

@@ -24,11 +24,7 @@ export default function Navbar() {
   const { user, isLoaded, isSignedIn } = useUser();
   const pathname = usePathname();
   const router = useRouter();
-  // const role = user?.publicMetadata?.role;
-  // --- ADMIN VIEW TOGGLE (via .env) ---
-  const envRole = process.env.NEXT_PUBLIC_ENABLE_ADMIN_VIEW === "true" ? "admin" : null;
-  const role = envRole || user?.publicMetadata?.role;
-  // ------------------------------------
+  const role = user?.publicMetadata?.role;
   const [navSearch, setNavSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
