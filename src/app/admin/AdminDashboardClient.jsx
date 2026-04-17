@@ -74,15 +74,6 @@ export default function AdminDashboardClient({ initialEquipment, initialReservat
     return <div className="p-6">Loading...</div>;
   }
 
-  // Temporarily disabled for testing
-  //   setIsAuthorized(true);
-  // }, [isLoaded, isSignedIn, router]);
-
-  // if (!isLoaded || !isAuthorized) {
-  //   return <div className="p-6">Loading...</div>;
-  // }
-  //----//
-
   const totalEquipment = equipment.length;
   const availableEquipment = equipment.filter((e) => e.availability === "Available").length;
   const activeReservations = reservations.filter((r) => r.status === "Active").length;
