@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# EU Equipment Management Web App
 
-## Getting Started
+## Description
 
-First, run the development server:
+The EU Equipment Management web application manages and tracks equipment for the Elmhurst University CS 475 class. It allows students and faculty to view, request, and reserve equipment necessary for academic projects. The goal of the application is to streamline the equipment management process, making it easier for users to access resources.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Tech Stack
+- **Framework**: Next.js
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Clerk
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Email**: Resend
+- **Deployment**: Vercel
+
+## Project Structure
+
+```
+├── src/                    # Application source code
+├── app/                    # Next.js app directory (pages and routes)
+├── components/             # Reusable React components
+├── types/                  # TypeScript type definitions
+├── prisma/                 # Database schema and migrations
+├── public/                 # Static assets
+└── package.json            # Project dependencies
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local Setup Instructions
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Steps
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/ElmhurstCS475SP26/eu-equipment-management.git
+   cd eu-equipment-management
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**:
+   - Copy `.env.example` to `.env.local`
+   - Fill in the required environment variables:
+     - `DATABASE_URL` - Your PostgreSQL database connection string
+     - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk public key
+     - `CLERK_SECRET_KEY` - Clerk secret key
+     - `NEXT_PUBLIC_SUPABASE_URL` - Supabase URL (if applicable)
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase key (if applicable)
+     - `RESEND_API_KEY` - Resend API key for email functionality
+
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**: Navigate to `http://localhost:3000` to view the application.
+
+## Available Scripts
+
+- `npm run dev` - Start the development server
+- `npm run build` - Build the project for production
+- `npm start` - Start the production server
+- `npm run lint` - Run ESLint to check code quality
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+For more information about the technologies used in this project:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs/)
+- [Clerk Documentation](https://clerk.com/docs)
+- [Tailwind CSS](https://tailwindcss.com/docs)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Contributions are welcome! Please feel free to submit a pull request or open an issue to discuss improvements or features.
