@@ -3,8 +3,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Calendar, Box, Home, Search, User, LogOut, Settings } from "lucide-react";
-import { NotificationsDropdown } from "../NotificationsDropdown";
-import { SettingsModal } from "../SettingsModal";
 import { useState, useEffect, useRef } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import {
@@ -20,7 +18,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { searchEquipment } from "@/app/actions/searchActions";
 
 export default function Navbar() {
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const { user, isLoaded, isSignedIn } = useUser();
   const pathname = usePathname();
   const router = useRouter();
@@ -81,9 +78,7 @@ export default function Navbar() {
     return null;
   }
 
-  const handleSettingsClick = () => {
-    setSettingsOpen(true);
-  };
+
 
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -181,9 +176,7 @@ export default function Navbar() {
       )}
       {/* Right: Notifications and user */}
       <div className="flex items-center gap-3 lg:gap-6 flex-shrink-0">
-        {/*<div className="relative mt-1">
-          <NotificationsDropdown />
-        </div>*/}
+
         <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -225,7 +218,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </nav>
   );
 }
