@@ -58,7 +58,9 @@ model Reservation {
   item      Item     @relation(fields: [itemId], references: [id])
   startDate DateTime
   endDate   DateTime
-  status    String   @default("pending") // pending | approved | cancelled | completed
+  status    String   @default("approved") // approved | cancelled | completed
+  bookingId String?  // To group multiple items in one reservation
+  studentId String?  // Student ID number for confirmation
   createdAt DateTime @default(now())
 }
 

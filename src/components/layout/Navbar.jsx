@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
-import { Calendar, Box, Home, Search, User, LogOut, Settings } from "lucide-react";
+import { Calendar, Box, Home, Search, User, LogOut, Settings, Plus, LayoutGrid } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import {
@@ -90,7 +90,7 @@ export default function Navbar() {
     <nav className="w-full border-b bg-white dark:bg-black px-4 md:px-6 py-2 flex items-center justify-between gap-4">
       {/* Left: Logo and nav links */}
       <div className="flex items-center gap-4 md:gap-8">
-        <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-blue-600">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="3" y="5" width="18" height="14" rx="3" fill="#2563eb" />
@@ -98,13 +98,28 @@ export default function Navbar() {
             </svg>
           </span>
           <span className="font-bold text-2xl tracking-tight select-none">MediaHub</span>
-        </Link>
-        <div className="hidden lg:flex items-center gap-6 text-sm lg:text-base font-medium whitespace-nowrap">
-          <Link href={role === "admin" ? "/admin" : "/dashboard"} className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
-            <Home className="w-4 h-4 lg:w-5 lg:h-5" /> Dashboard
-          </Link>
-          {role !== "admin" && (
+        </div>
+        <div className="hidden lg:flex items-center gap-12 text-sm lg:text-base font-medium whitespace-nowrap">
+          {role === "admin" ? (
             <>
+              <Link href="/admin" className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
+                <Home className="w-4 h-4 lg:w-5 lg:h-5" /> Dashboard
+              </Link>
+              <Link href="/admin/inventory" className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
+                <Box className="w-4 h-4 lg:w-5 lg:h-5" /> Inventory
+              </Link>
+              <Link href="/admin/kits" className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
+                <LayoutGrid className="w-4 h-4 lg:w-5 lg:h-5" /> Kits
+              </Link>
+              <Link href="/admin/reservations" className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
+                <Calendar className="w-4 h-4 lg:w-5 lg:h-5" /> Reservations
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/dashboard" className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
+                <Home className="w-4 h-4 lg:w-5 lg:h-5" /> Dashboard
+              </Link>
               <Link href="/catalog" className="flex items-center gap-1 text-black dark:text-white hover:text-blue-600 transition-colors">
                 <Box className="w-4 h-4 lg:w-5 lg:h-5" /> Equipment
               </Link>
@@ -175,8 +190,18 @@ export default function Navbar() {
         <div className="flex-1"></div>
       )}
       {/* Right: Notifications and user */}
-      <div className="flex items-center gap-3 lg:gap-6 flex-shrink-0">
-
+      <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
+        {role !== "admin" && (
+          <Link href="/reservations/new">
+            <Button className="bg-blue-600 hover:bg-blue-700 h-10 px-4 gap-2 hidden sm:flex items-center rounded-xl shadow-sm">
+              <Plus className="w-5 h-5" />
+              <span>New Reservation</span>
+            </Button>
+            <Button size="icon" className="bg-blue-600 hover:bg-blue-700 h-10 w-10 sm:hidden flex items-center justify-center rounded-xl shadow-sm">
+              <Plus className="w-6 h-6" />
+            </Button>
+          </Link>
+        )}
         <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

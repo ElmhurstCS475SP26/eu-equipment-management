@@ -1,4 +1,6 @@
-// Sign-Up Page
+/*
+ * Sign-Up Page
+ */
 "use client";
 
 import { SignUp } from "@clerk/nextjs";

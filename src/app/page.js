@@ -1,4 +1,8 @@
-// Login Page - Default Landing Page
+/*
+ * page.js — Login / Landing Page
+ * The app entry point. Renders the Clerk sign-in form for unauthenticated users.
+ * Once signed in, automatically redirects admins to /admin and students to /dashboard.
+ */
 "use client";
 
 import { SignIn, useUser } from "@clerk/nextjs";

@@ -1,3 +1,10 @@
+/*
+ * equipment/[id]/page.jsx — Equipment Detail Page
+ * Displays detailed information for a single piece of equipment (name, brand,
+ * model, category, description, availability, and image). Provides a
+ * "Reserve This Item" button that routes to the New Reservation flow.
+ * Server-rendered; fetches the item by its numeric database ID.
+ */
 import Link from "next/link";
 import { ArrowLeft, Calendar, Package, Info, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -154,9 +161,9 @@ export default async function EquipmentDetails({ params }) {
                 <CardDescription>Select your pickup and return dates</CardDescription>
               </CardHeader>
               <CardContent>
-                <Link href={`/checkout/${equipment.id}`}>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    Continue to Reservation
+                <Link href={`/reservations/new?equipmentId=${equipment.id}`}>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 h-11 rounded-xl shadow-md shadow-blue-100">
+                    Reserve Equipment
                   </Button>
                 </Link>
               </CardContent>
@@ -194,8 +201,7 @@ export default async function EquipmentDetails({ params }) {
           <div>
             <h3 className="font-semibold mb-2">Reservation Rules</h3>
             <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-              <li>Equipment must be picked up during business hours (9 AM - 5 PM)</li>
-              <li>Maximum reservation period is 7 days</li>
+              <li>Equipment must be picked up during business hours (10 AM - 3 PM)</li>
               <li>Valid student ID required for pickup</li>
               <li>Equipment must be returned in the same condition</li>
             </ul>

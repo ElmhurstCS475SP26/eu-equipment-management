@@ -51,7 +51,7 @@ export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Equipment</DialogTitle>
           <DialogDescription>

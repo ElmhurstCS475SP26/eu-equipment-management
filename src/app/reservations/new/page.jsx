@@ -1,19 +1,17 @@
 /*
- * catalog/page.jsx — Equipment Catalog (Server Page)
- * Fetches all equipment items from the database and passes them to CatalogClient.
- * Students use this page to browse, filter, and search available equipment,
- * and to navigate to individual item detail pages or start a reservation.
+ * reservations/new/page.jsx — New Reservation (Server Page)
+ * Fetches all equipment items and maps them into a format usable by the client.
+ * Entry point for creating a new multi-item reservation. Can be pre-populated
+ * with an item via the ?equipmentId= query param (e.g., from catalog or "Book Again").
  */
 import { prisma } from "@/lib/db";
-import CatalogClient from "./CatalogClient";
+import NewReservationClient from "./NewReservationClient";
 
-// Opt out of static side generation for up-to-date DB fetches
 export const dynamic = "force-dynamic";
 
-export default async function CatalogPage() {
+export default async function NewReservationPage() {
   const items = await prisma.item.findMany();
 
-  // Transform Prisma DB records to the format expected by the frontend
   const equipmentData = items.map((item) => ({
     id: item.id.toString(),
     name: item.name,
@@ -25,8 +23,7 @@ export default async function CatalogPage() {
     description: item.description || "",
     quantity: item.quantity || 1,
     quantityAvailable: item.status === "available" ? (item.quantity || 1) : 0,
-    condition: "Good"
   }));
 
-  return <CatalogClient initialEquipment={equipmentData} />;
+  return <NewReservationClient initialEquipment={equipmentData} />;
 }
