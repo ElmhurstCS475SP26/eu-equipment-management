@@ -1,6 +1,13 @@
+/*
+ * profile/page.jsx — Student Profile Page
+ * Server-rendered. Displays the signed-in user's Clerk profile info (name, email,
+ * role, member since) and a live activity summary (pending, active, upcoming,
+ * total reservation counts) pulled from the database. Also shows a recent
+ * reservations list for students.
+ */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Shield, Calendar, Clock, List } from "lucide-react";
+import { User, Mail, Shield, Calendar, Clock, List, CheckCircle } from "lucide-react";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 
@@ -8,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Profile() {
   const user = await currentUser();
-  
+
   const getUserInitials = () => {
     if (!user || (!user.fullName && !user.firstName)) return "U";
     const nameToUse = user.fullName || user.firstName || "User";
@@ -30,21 +37,41 @@ export default async function Profile() {
     });
 
     if (dbUser) {
-      reservationsData = dbUser.reservations.map(r => ({
-        id: r.id,
-        status: r.status === "pending" ? "Pending" : r.status === "approved" || r.status === "active" ? "Active" : r.status === "completed" || r.status === "returned" ? "Completed" : "Cancelled",
-        pickupDate: r.startDate,
-        returnDate: r.endDate,
-        equipmentName: r.item.name,
-      }));
+      const now = new Date();
+      reservationsData = dbUser.reservations.map(r => {
+        const startDate = new Date(r.startDate);
+        const endDate = new Date(r.endDate);
+        
+        let status = "Other";
+        if (r.status === "cancelled") {
+          status = "Cancelled";
+        } else if (r.status === "completed" || r.status === "returned" || (r.status === "approved" && endDate < now)) {
+          status = "Past";
+        } else if (r.status === "approved" || r.status === "active") {
+          if (startDate > now) {
+            status = "Upcoming";
+          } else {
+            status = "Active";
+          }
+        }
+
+        return {
+          id: r.id,
+          status,
+          pickupDate: r.startDate,
+          returnDate: r.endDate,
+          equipmentName: r.item.name,
+        };
+      });
     }
   }
 
-  const userReservations = reservationsData.filter(r => r.status === "Active" || r.status === "Upcoming" || r.status === "Pending");
-  const pendingCount = reservationsData.filter(r => r.status === "Pending").length;
   const activeCount = reservationsData.filter(r => r.status === "Active").length;
-  // Let "Upcoming" just be another word for pending for now, or approved but in future. 
-  const upcomingCount = pendingCount; 
+  const upcomingCount = reservationsData.filter(r => r.status === "Upcoming").length;
+  const pastCount = reservationsData.filter(r => r.status === "Past").length;
+  const totalCount = reservationsData.filter(r => r.status !== "Cancelled").length;
+
+  const currentReservations = reservationsData.filter(r => r.status === "Active" || r.status === "Upcoming");
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
@@ -137,17 +164,8 @@ export default async function Profile() {
             <div className="grid gap-4 md:grid-cols-4">
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 text-gray-600 mb-2">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-sm">Pending</span>
-                </div>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {pendingCount}
-                </p>
-              </div>
-              <div className="rounded-lg border p-4">
-                <div className="flex items-center gap-2 text-gray-600 mb-2">
                   <Calendar className="h-4 w-4" />
-                  <span className="text-sm">Active Reservations</span>
+                  <span className="text-sm">Active</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {activeCount}
@@ -156,7 +174,7 @@ export default async function Profile() {
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 text-gray-600 mb-2">
                   <Clock className="h-4 w-4" />
-                  <span className="text-sm">Upcoming Pickups</span>
+                  <span className="text-sm">Upcoming</span>
                 </div>
                 <p className="text-2xl font-bold text-green-600">
                   {upcomingCount}
@@ -164,11 +182,20 @@ export default async function Profile() {
               </div>
               <div className="rounded-lg border p-4">
                 <div className="flex items-center gap-2 text-gray-600 mb-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm">Past</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-600">
+                  {pastCount}
+                </p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center gap-2 text-gray-600 mb-2">
                   <List className="h-4 w-4" />
-                  <span className="text-sm">Total Reservations</span>
+                  <span className="text-sm">Total Bookings</span>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {reservationsData.length}
+                  {totalCount}
                 </p>
               </div>
             </div>
@@ -184,7 +211,7 @@ export default async function Profile() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {userReservations.slice(0, 3).map((reservation) => (
+                {currentReservations.slice(0, 3).map((reservation) => (
                   <div key={reservation.id} className="flex items-center justify-between rounded-lg border p-3">
                     <div>
                       <p className="font-medium">{reservation.equipmentName}</p>
@@ -195,16 +222,14 @@ export default async function Profile() {
                     <Badge className={
                       reservation.status === "Active"
                         ? "bg-green-100 text-green-700 hover:bg-green-100"
-                        : reservation.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-                          : "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-100"
                     }>
                       {reservation.status}
                     </Badge>
                   </div>
                 ))}
-                {userReservations.length === 0 && (
-                  <p className="text-sm text-gray-500">No active or pending reservations.</p>
+                {currentReservations.length === 0 && (
+                  <p className="text-sm text-gray-500">No active or upcoming reservations.</p>
                 )}
               </div>
             </CardContent>

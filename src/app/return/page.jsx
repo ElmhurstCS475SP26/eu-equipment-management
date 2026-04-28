@@ -1,3 +1,9 @@
+/*
+ * return/page.jsx — Equipment Return Page
+ * Allows students to initiate a return by scanning a QR code or manually entering
+ * an equipment ID. After identifying the item, they select its condition and can
+ * upload damage photos if needed. Currently uses mock data; not yet wired to the DB.
+ */
 "use client";
 
 import { useState } from "react";
@@ -24,7 +30,7 @@ export default function EquipmentReturn() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!equipmentId) {
       toast.error("Please scan or enter equipment ID");
       return;

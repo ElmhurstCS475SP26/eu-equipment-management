@@ -1,3 +1,9 @@
+/*
+ * reservations/page.jsx — My Reservations (Server Page)
+ * Fetches the signed-in student's reservations from the database, computes the
+ * display status for each (Active / Upcoming / Past), and passes all data to
+ * ReservationsClient. Filters out cancelled reservations.
+ */
 import { prisma } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
 import ReservationsClient from "./ReservationsClient";
@@ -36,6 +42,8 @@ export default async function MyReservationsPage() {
 
         return {
           id: r.id,
+          bookingId: r.bookingId || null,
+          itemId: r.itemId,
           status: displayStatus,
           pickupDate: r.startDate.toISOString(),
           returnDate: r.endDate.toISOString(),

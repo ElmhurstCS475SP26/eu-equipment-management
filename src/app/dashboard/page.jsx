@@ -1,3 +1,9 @@
+/**
+ * dashboard/page.jsx — Student Dashboard
+ * The main landing page for signed-in students. Displays a welcome message,
+ * active/upcoming reservation counts, featured equipment categories, and a
+ * summary of the student's current active reservations. Server-rendered.
+ */
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { Calendar, Clock, AlertCircle, Video, Mic, Lightbulb, Camera, ArrowRight } from "lucide-react";
@@ -26,58 +32,33 @@ export default async function Dashboard() {
     });
 
     if (dbUser) {
-      const reservations = dbUser.reservations.map(r => ({
-        id: r.id,
-        status: r.status,
-        pickupDate: r.startDate,
-        returnDate: r.endDate,
-        equipmentName: r.item.name,
-        equipmentImage: r.item.imageUrl || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
-        equipmentId_full: r.item.externalId || r.item.id.toString(),
-      }));
+      const reservations = dbUser.reservations
+        .filter(r => r.status !== "cancelled")
+        .map(r => ({
+          id: r.id,
+          status: r.status,
+          pickupDate: r.startDate,
+          returnDate: r.endDate,
+          equipmentName: r.item.name,
+          equipmentImage: r.item.imageUrl || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
+          equipmentId_full: r.item.externalId || r.item.id.toString(),
+        }));
 
-      // Map DB statuses to Dashboard display logic
-      activeReservations = reservations.filter(r => r.status === "approved" || r.status === "active");
-      upcomingReservations = reservations.filter(r => r.status === "pending");
+      const now = new Date();
+      // Active means it's current or already picked up
+      activeReservations = reservations.filter(r => 
+        (r.status === "approved" || r.status === "active") && 
+        new Date(r.pickupDate) <= now && 
+        new Date(r.returnDate) >= now
+      );
       
-      // Also treat overdue items as active for dashboard simplicity
+      // Upcoming means approved but start date is in the future
+      upcomingReservations = reservations.filter(r => 
+        (r.status === "approved" || r.status === "active") && 
+        new Date(r.pickupDate) > now
+      );
     }
   }
-
-  const featuredCategories = [
-    {
-      name: "DSLR Cameras",
-      icon: Camera,
-      count: 3,
-      available: 2,
-      color: "bg-blue-100 text-blue-600",
-      link: "/catalog?category=Cameras",
-    },
-    {
-      name: "Cinema Cameras",
-      icon: Video,
-      count: 2,
-      available: 0,
-      color: "bg-purple-100 text-purple-600",
-      link: "/catalog?category=Cameras",
-    },
-    {
-      name: "Microphones",
-      icon: Mic,
-      count: 5,
-      available: 4,
-      color: "bg-green-100 text-green-600",
-      link: "/catalog?category=Audio Equipment",
-    },
-    {
-      name: "Lighting Kits",
-      icon: Lightbulb,
-      count: 4,
-      available: 3,
-      color: "bg-yellow-100 text-yellow-600",
-      link: "/catalog?category=Lighting Equipment",
-    },
-  ];
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
@@ -119,41 +100,6 @@ export default async function Dashboard() {
             <p className="text-xs text-gray-500 mt-1">All on time</p>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Featured Equipment */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Featured Equipment</h2>
-          <Link href="/catalog">
-            <Button variant="ghost" className="gap-2">
-              View All
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {featuredCategories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Link key={category.name} href={category.link}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className={`h-12 w-12 rounded-lg ${category.color} flex items-center justify-center mb-4`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="font-semibold mb-1">{category.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Badge variant={category.available > 0 ? "default" : "secondary"} className={category.available > 0 ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}>
-                        {category.available}/{category.count} Available
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
       </div>
 
       {/* My Active Reservations */}
@@ -216,7 +162,7 @@ export default async function Dashboard() {
       {/* Upcoming Reservations */}
       {upcomingReservations.length > 0 && (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Upcoming Pickups (Pending)</h2>
+          <h2 className="text-2xl font-bold mb-4">Upcoming Pickups</h2>
           <div className="space-y-3">
             {upcomingReservations.map((reservation) => (
               <Card key={reservation.id}>

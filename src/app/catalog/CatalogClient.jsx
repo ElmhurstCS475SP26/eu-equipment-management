@@ -1,3 +1,9 @@
+/**
+ * catalog/CatalogClient.jsx — Equipment Catalog (Client Component)
+ * Interactive catalog UI with search, category filtering, and a responsive item grid.
+ * Each item card links to the equipment detail page. A slide-out filter panel is
+ * available on mobile. Receives equipment data as props from the server page.
+ */
 "use client";
 
 import { useState, Suspense } from "react";
@@ -213,15 +219,19 @@ function CatalogFiltersAndGrid({ initialEquipment, linkPrefix }) {
                       </span>
                     </div>
                   </CardContent>
-                  <CardFooter className="p-4 pt-0 bg-transparent border-t-0">
-                    <Link href={`${linkPrefix}/${item.id}`} className="w-full">
-                      <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        disabled={item.availability !== "Available"}
-                      >
-                        {item.availability === "Available" ? "View Details" : "Unavailable"}
+                  <CardFooter className="p-4 pt-0 bg-transparent border-t-0 flex gap-2">
+                    <Link href={`${linkPrefix}/${item.id}`} className="flex-1">
+                      <Button variant="outline" className="w-full h-10 rounded-xl">
+                        View
                       </Button>
                     </Link>
+                    {item.availability === "Available" && (
+                      <Link href={`/reservations/new?equipmentId=${item.id}`} className="flex-1">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 h-10 rounded-xl">
+                          Reserve
+                        </Button>
+                      </Link>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
