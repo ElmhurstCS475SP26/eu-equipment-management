@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { prisma } from "@/lib/db";
+import { EQUIPMENT_POLICIES } from "@/lib/constants";
 
 // Opt out of static side generation for up-to-date DB fetches
 export const dynamic = "force-dynamic";
@@ -198,28 +199,20 @@ export default async function EquipmentDetails({ params }) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold mb-2">Reservation Rules</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-              <li>Equipment must be picked up during business hours (10 AM - 3 PM)</li>
-              <li>Valid student ID required for pickup</li>
-              <li>Equipment must be returned in the same condition</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Late Return Policy</h3>
-            <p className="text-sm text-gray-600">
-              Late returns may result in reservation restrictions. Please contact the Digital Media
-              Department if you need to extend your reservation.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Damage Responsibility</h3>
-            <p className="text-sm text-gray-600">
-              Students are responsible for any damage or loss of equipment during the reservation
-              period. Please report any issues immediately.
-            </p>
-          </div>
+          {EQUIPMENT_POLICIES.map((policy, idx) => (
+            <div key={idx}>
+              <h3 className="font-semibold mb-2">{policy.title}</h3>
+              {policy.rules ? (
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                  {policy.rules.map((rule, ridx) => (
+                    <li key={ridx}>{rule}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-600">{policy.content}</p>
+              )}
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

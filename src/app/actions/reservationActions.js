@@ -1,6 +1,7 @@
 "use server";
 import { prisma } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
+import { sendReservationEmail } from "@/lib/email-utils";
 
 export async function createReservationAction(data) {
   try {
@@ -53,6 +54,28 @@ export async function createReservationAction(data) {
         }
       })
     ));
+
+    // Send confirmation email with PDF contract (Async, don't wait to return success to UI if possible, or wait to ensure delivery)
+    try {
+      await sendReservationEmail({
+        to: dbUser.email,
+        subject: `Reservation Confirmation: ${bookingId}`,
+        type: 'confirmation',
+        reservation: {
+          id: reservationsResult[0].id,
+          bookingId,
+          startDate,
+          endDate,
+          studentId: data.studentId
+        },
+        items: items,
+        user: dbUser,
+        includeContract: true
+      });
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+      // We don't fail the whole action if just the email fails, but we log it
+    }
 
     return { success: true, bookingId, count: reservationsResult.length };
   } catch (error) {
