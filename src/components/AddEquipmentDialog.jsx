@@ -50,11 +50,10 @@ export function AddEquipmentDialog({ open, onOpenChange, onAdd }) {
     brand: "",
     model: "",
     category: "",
-    location: "DM Checkout (second floor of Daniels Hall)",
+    location: "Daniels 202",
     quantity: "1",
     description: "",
-    kind: "individual",
-    barcode: ""
+    kind: "individual"
   });
 
   const handleImageUpload = (e) => {
@@ -67,8 +66,8 @@ export function AddEquipmentDialog({ open, onOpenChange, onAdd }) {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.category) {
-      toast.error("Please fill in required fields (Name, Category)");
+    if (!formData.name || !formData.category || !formData.brand || !formData.model) {
+      toast.error("Please fill in required fields (Name, Category, Brand, Model)");
       return;
     }
 
@@ -83,8 +82,8 @@ export function AddEquipmentDialog({ open, onOpenChange, onAdd }) {
       setImagePreview("");
       setFormData({
         name: "", brand: "", model: "", category: "", 
-        location: "DM Checkout (second floor of Daniels Hall)", quantity: "1", description: "",
-        kind: "individual", barcode: ""
+        location: "Daniels 202", quantity: "1", description: "",
+        kind: "individual"
       });
       onOpenChange(false);
     } else {
@@ -150,7 +149,7 @@ export function AddEquipmentDialog({ open, onOpenChange, onAdd }) {
               {/* Brand & Model */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Brand</Label>
+                  <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Brand</Label>
                   <Input 
                     placeholder="e.g. Sony" 
                     className="bg-white"
@@ -159,7 +158,7 @@ export function AddEquipmentDialog({ open, onOpenChange, onAdd }) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Model</Label>
+                  <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Model</Label>
                   <Input 
                     placeholder="e.g. Alpha 7 IV" 
                     className="bg-white"
@@ -197,20 +196,31 @@ export function AddEquipmentDialog({ open, onOpenChange, onAdd }) {
                 </div>
                 <div className="space-y-2">
                   <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Location</Label>
-                  <div className="bg-slate-100 p-2.5 rounded-md border text-sm text-slate-600 font-medium">
-                    DM Checkout (second floor of Daniels Hall)
-                  </div>
+                  <Select 
+                    value={formData.location}
+                    onValueChange={(v) => setFormData({...formData, location: v})}
+                  >
+                    <SelectTrigger className="bg-white w-full h-auto min-h-[40px] py-2">
+                      <SelectValue placeholder="Select location" className="text-left whitespace-normal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DM Checkout">DM Checkout</SelectItem>
+                      <SelectItem value="DM Checkout (second floor of Daniels Hall)">DM Checkout (second floor of Daniels Hall)</SelectItem>
+                      <SelectItem value="DM Checkout / DA302">DM Checkout / DA302</SelectItem>
+                      <SelectItem value="AR VR Makerspace">AR VR Makerspace</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               {/* Quantity */}
-              <div className="space-y-2">
+              <div className="w-1/2 space-y-2">
                 <Label>Quantity</Label>
                 <Input 
-                   type="number" 
-                   value={formData.quantity} 
-                   onChange={(e) => setFormData({...formData, quantity: e.target.value})}
-                   className="bg-white max-w-[200px]"
+                  type="number" 
+                  value={formData.quantity} 
+                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  className="bg-white"
                 />
               </div>
 

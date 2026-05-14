@@ -2,12 +2,17 @@
 import { prisma } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { sendReservationEmail } from "@/lib/email-utils";
+import { revalidatePath } from "next/cache";
 
 export async function createReservationAction(data) {
   try {
     const user = await currentUser();
     if (!user) {
       return { success: false, error: "Not logged in" };
+    }
+
+    if (!data.studentId) {
+      return { success: false, error: "Student ID is required for reservations" };
     }
 
     const dbUser = await prisma.user.upsert({
@@ -50,7 +55,8 @@ export async function createReservationAction(data) {
           endDate,
           status: "approved",
           bookingId: bookingId,
-          studentId: data.studentId || null,
+          studentId: data.studentId,
+          contractPdfUrl: `/api/reservations/${bookingId}/contract`, // Link to dynamic PDF route
         }
       })
     ));
@@ -156,9 +162,80 @@ export async function updateReservationStatusAction(reservationId, newStatus) {
       data: { status: newStatus }
     });
 
+    revalidatePath("/admin/reservations");
     return { success: true };
   } catch (error) {
     console.error("Failed to update status:", error);
     return { success: false, error: error.message || "Failed to update status" };
+  }
+}
+
+export async function checkOutReservationAction(reservationId) {
+  try {
+    const user = await currentUser();
+    if (!user || user.publicMetadata?.role !== "admin") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { item: true }
+    });
+
+    if (!reservation) return { success: false, error: "Reservation not found" };
+
+    // Update reservation status and associated item status
+    await prisma.$transaction([
+      prisma.reservation.update({
+        where: { id: reservationId },
+        data: { status: "active" }
+      }),
+      prisma.item.update({
+        where: { id: reservation.itemId },
+        data: { status: "checked_out" }
+      })
+    ]);
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/reservations");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to check out:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function returnReservationAction(reservationId) {
+  try {
+    const user = await currentUser();
+    if (!user || user.publicMetadata?.role !== "admin") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { item: true }
+    });
+
+    if (!reservation) return { success: false, error: "Reservation not found" };
+
+    // Update reservation status and associated item status
+    await prisma.$transaction([
+      prisma.reservation.update({
+        where: { id: reservationId },
+        data: { status: "completed" }
+      }),
+      prisma.item.update({
+        where: { id: reservation.itemId },
+        data: { status: "available" }
+      })
+    ]);
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/reservations");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to return equipment:", error);
+    return { success: false, error: error.message };
   }
 }

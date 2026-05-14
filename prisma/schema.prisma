@@ -21,7 +21,6 @@ model Item {
   id            Int      @id @default(autoincrement())
   externalId    String?  @unique
   name          String
-  barcode       String?  @unique
   category      String
   status        String   @default("available") // available | checked_out | flagged
   description   String?
@@ -30,7 +29,7 @@ model Item {
   model         String?
   location      String?
   quantity      Int?
-  kind          String?
+  kind          String?  @default("individual")
   cheqroomKitId String?
   kitId         Int?
   createdAt     DateTime @default(now())
@@ -46,8 +45,10 @@ model Kit {
   externalId String?  @unique
   name       String
   status     String   @default("available")
+  imageUrl   String?
   items      Item[]
   createdAt  DateTime @default(now())
+  flags      Flag[]
 }
 
 model Reservation {
@@ -61,6 +62,7 @@ model Reservation {
   status            String    @default("approved") // approved | cancelled | completed
   bookingId         String?   // To group multiple items in one reservation
   studentId         String?   // Student ID number for confirmation
+  contractPdfUrl    String?   // Link to the signed contract
   createdAt         DateTime  @default(now())
   
   // Notification tracking
@@ -83,8 +85,10 @@ model Checkout {
 
 model Flag {
   id        Int      @id @default(autoincrement())
-  itemId    Int
-  item      Item     @relation(fields: [itemId], references: [id])
+  itemId    Int?     @unique
+  item      Item?    @relation(fields: [itemId], references: [id])
+  kitId     Int?     @unique
+  kit       Kit?     @relation(fields: [kitId], references: [id])
   reason    String
   notes     String?
   resolved  Boolean  @default(false)

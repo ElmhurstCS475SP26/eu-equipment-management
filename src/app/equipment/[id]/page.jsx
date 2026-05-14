@@ -56,9 +56,7 @@ export default async function EquipmentDetails({ params }) {
     description: dbItem.description || "",
     quantity: dbItem.quantity || 1,
     quantityAvailable: dbItem.status === "available" ? (dbItem.quantity || 1) : 0,
-    condition: "Good",
     specifications: {
-      "Barcode": dbItem.barcode || "N/A",
       "Location": dbItem.location || "N/A",
     }
   };
@@ -139,15 +137,6 @@ export default async function EquipmentDetails({ params }) {
                   </div>
                 ))}
               </dl>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Equipment Condition</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">{equipment.condition}</p>
             </CardContent>
           </Card>
 

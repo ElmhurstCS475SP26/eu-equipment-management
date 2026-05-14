@@ -69,7 +69,7 @@ export function getEmailHtml({ type, reservation, items, user }) {
       </td>
       <td style="padding: 15px 10px; color: #fff;">${item.name}</td>
       <td style="padding: 15px 10px; color: #888;">${item.brand || 'None'}</td>
-      <td style="padding: 15px 10px; color: #888;">${item.externalId || item.barcode || 'N/A'}</td>
+      <td style="padding: 15px 10px; color: #888;">${item.externalId || 'N/A'}</td>
     </tr>
   `).join('');
 
