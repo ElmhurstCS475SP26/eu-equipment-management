@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Calendar, Clock, Package, X, Plus } from "lucide-react";
+import { Calendar, Clock, Package, X, Plus, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -230,20 +230,11 @@ export default function ReservationsClient({ initialReservations }) {
           </div>
 
           {/* Actions */}
-          {isPast ? (
-            <div className="pt-1">
-              <Link href="/reservations/new" className="block">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl gap-2">
-                  <Plus className="h-4 w-4" />
-                  Book Again
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="flex gap-2 pt-1">
-              <AlertDialog>
-                <AlertDialogTrigger
-                  render={
+          <div className="flex flex-col gap-2 pt-1">
+            {!isPast && (
+              <div className="flex gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
                     <Button
                       variant="outline"
                       className="flex-1 gap-2 text-red-600 hover:text-red-700 rounded-xl"
@@ -252,34 +243,43 @@ export default function ReservationsClient({ initialReservations }) {
                       <X className="h-4 w-4" />
                       Cancel
                     </Button>
-                  }
-                />
-                <AlertDialogContent className="rounded-2xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel Reservation?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {booking.items.length > 1
-                        ? `This will cancel all ${booking.items.length} items in this booking (${booking.items.map((i) => i.equipmentName).join(", ")}). This cannot be undone.`
-                        : `Are you sure you want to cancel your reservation for ${booking.items[0]?.equipmentName}?`}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="rounded-xl">
-                      Keep Reservation
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleCancelBooking(booking)}
-                      className="bg-red-600 hover:bg-red-700 rounded-xl"
-                    >
-                      {booking.items.length > 1
-                        ? `Cancel All ${booking.items.length} Items`
-                        : "Cancel Reservation"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-2xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel Reservation?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {booking.items.length > 1
+                          ? `This will cancel all ${booking.items.length} items in this booking (${booking.items.map((i) => i.equipmentName).join(", ")}). This cannot be undone.`
+                          : `Are you sure you want to cancel your reservation for ${booking.items[0]?.equipmentName}?`}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-xl">
+                        Keep Reservation
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleCancelBooking(booking)}
+                        className="bg-red-600 hover:bg-red-700 rounded-xl"
+                      >
+                        {booking.items.length > 1
+                          ? `Cancel All ${booking.items.length} Items`
+                          : "Cancel Reservation"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+            
+            <Button 
+              variant="outline" 
+              className="w-full gap-2 rounded-xl"
+              onClick={() => window.open(`/api/reservations/${booking.bookingId || booking.ids[0]}/contract`, '_blank')}
+            >
+              <FileText className="h-4 w-4" />
+              View Contract
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -22,8 +24,12 @@ import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onDelete }) {
-  const [formData, setFormData] = useState(equipment);
-  const [imagePreview, setImagePreview] = useState(equipment?.image || "");
+  const [formData, setFormData] = useState({
+    ...equipment,
+    // Map database status back to UI options if needed
+    availability: equipment?.availability || (equipment?.status ? equipment.status.charAt(0).toUpperCase() + equipment.status.slice(1) : "Available")
+  });
+  const [imagePreview, setImagePreview] = useState(equipment?.image || equipment?.imageUrl || "");
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -31,19 +37,21 @@ export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onD
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        if (formData) {
-          setFormData({ ...formData, image: reader.result });
-        }
+        setFormData({ ...formData, image: reader.result, imageUrl: reader.result });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (formData) {
-      onSave(formData);
-      toast.success("Equipment updated successfully");
-      onOpenChange(false);
+      // Ensure we pass both naming conventions to be safe, or just the one the action expects
+      await onSave({
+        ...formData,
+        imageUrl: imagePreview,
+        status: formData.availability.toLowerCase()
+      });
+      // onSave (handleUpdateEquipment in the dashboard) handles closing via setEditingEquipment(null)
     }
   };
 
@@ -131,6 +139,23 @@ export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onD
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-location">Location</Label>
+              <Select
+                value={formData.location || "DM Checkout"}
+                onValueChange={(value) => setFormData({ ...formData, location: value })}
+              >
+                <SelectTrigger id="edit-location" className="w-full h-auto min-h-[40px] py-2">
+                  <SelectValue placeholder="Select location" className="text-left whitespace-normal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DM Checkout">DM Checkout</SelectItem>
+                  <SelectItem value="DM Checkout (second floor of Daniels Hall)">DM Checkout (second floor of Daniels Hall)</SelectItem>
+                  <SelectItem value="DM Checkout / DA302">DM Checkout / DA302</SelectItem>
+                  <SelectItem value="AR VR Makerspace">AR VR Makerspace</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -173,53 +198,38 @@ export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onD
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-available">Available Count</Label>
+              <Label htmlFor="edit-available">Available Count (Display Only)</Label>
               <Input
                 id="edit-available"
                 type="number"
+                disabled
                 value={formData.quantityAvailable}
-                onChange={(e) => setFormData({ ...formData, quantityAvailable: parseInt(e.target.value) })}
+                className="bg-gray-50"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-condition">Condition</Label>
-              <Select
-                value={formData.condition}
-                onValueChange={(value) => setFormData({ ...formData, condition: value })}
-              >
-                <SelectTrigger id="edit-condition">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="New">New</SelectItem>
-                  <SelectItem value="Excellent">Excellent</SelectItem>
-                  <SelectItem value="Good">Good</SelectItem>
-                  <SelectItem value="Fair">Fair</SelectItem>
-                  <SelectItem value="Damaged">Damaged</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-status">Status</Label>
-              <Select
-                value={formData.availability}
-                onValueChange={(value) => setFormData({ ...formData, availability: value })}
-              >
-                <SelectTrigger id="edit-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="Reserved">Reserved</SelectItem>
-                  <SelectItem value="Checked Out">Checked Out</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Unavailable">Unavailable</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-status">Status</Label>
+            <Select
+              value={formData.availability}
+              onValueChange={(value) => setFormData({ ...formData, availability: value })}
+              disabled={equipment?.status === 'flagged'}
+            >
+              <SelectTrigger id="edit-status" className={equipment?.status === 'flagged' ? "bg-slate-50 cursor-not-allowed" : ""}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Available">Available</SelectItem>
+                <SelectItem value="Reserved">Reserved</SelectItem>
+                <SelectItem value="Checked Out">Checked Out</SelectItem>
+                <SelectItem value="Maintenance">Maintenance</SelectItem>
+                <SelectItem value="Unavailable">Unavailable</SelectItem>
+              </SelectContent>
+            </Select>
+            {equipment?.status === 'flagged' && (
+              <p className="text-[10px] text-red-500 font-medium mt-1">Resolve active flag to change status.</p>
+            )}
           </div>
         </div>
         <DialogFooter className="flex w-full items-center justify-between sm:justify-between border-t border-gray-100 dark:border-zinc-800 pt-4 mt-2">
@@ -228,7 +238,7 @@ export function EditEquipmentDialog({ equipment, open, onOpenChange, onSave, onD
             className="bg-red-50 hover:bg-red-100 text-red-600 border-red-200 hover:border-red-300"
             onClick={() => {
               onOpenChange(false);
-              onDelete();
+              if (onDelete) onDelete();
             }}
           >
             Delete Equipment

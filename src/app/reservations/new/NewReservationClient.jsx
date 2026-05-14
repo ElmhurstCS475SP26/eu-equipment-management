@@ -109,12 +109,26 @@ export default function NewReservationClient({ initialEquipment }) {
   );
 
   const addToCart = (item) => {
-    if (cart.find((i) => i.id === item.id)) {
-      toast.error("Item already in reservation");
-      return;
+    if (item.type === 'kit') {
+      // Add all items in the kit
+      const kitItems = initialEquipment.filter(e => item.itemIds.includes(e.id));
+      const itemsToAdd = kitItems.filter(ki => !cart.some(ci => ci.id === ki.id));
+
+      if (itemsToAdd.length === 0) {
+        toast.info("All items from this kit are already in your reservation");
+        return;
+      }
+
+      setCart([...cart, ...itemsToAdd]);
+      toast.success(`Added ${itemsToAdd.length} items from ${item.name}`);
+    } else {
+      if (cart.find((i) => i.id === item.id)) {
+        toast.error("Item already in reservation");
+        return;
+      }
+      setCart([...cart, item]);
+      toast.success(`${item.name} added to reservation`);
     }
-    setCart([...cart, item]);
-    toast.success(`${item.name} added to reservation`);
   };
 
   const removeFromCart = (id) => {
@@ -467,7 +481,7 @@ export default function NewReservationClient({ initialEquipment }) {
               <CardContent className="space-y-1">
                 <p className="font-semibold">Digital Media Equipment Room</p>
                 <p className="text-sm text-gray-600">
-                  Daniels Hall, Second Floor
+                  Daniels Hall, Room 202
                 </p>
                 <p className="text-sm text-gray-600">
                   190 S Prospect Ave, Elmhurst, IL 60126

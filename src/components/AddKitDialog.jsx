@@ -18,6 +18,13 @@ import {
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Checkbox } from "./ui/checkbox";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "./ui/select";
 import { toast } from "sonner";
 import { createKitAction } from "@/app/actions/kitActions";
 
@@ -25,6 +32,7 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
   const [formData, setFormData] = useState({
     name: "",
     externalId: "",
+    status: "available",
   });
   const [imagePreview, setImagePreview] = useState("");
   const [selectedItemIds, setSelectedItemIds] = useState([]);
@@ -51,6 +59,11 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
       return;
     }
 
+    if (selectedItemIds.length < 1) {
+      toast.error("A kit must contain at least 1 item");
+      return;
+    }
+
     const result = await createKitAction({
       ...formData,
       itemIds: selectedItemIds,
@@ -59,7 +72,7 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
 
     if (result.success) {
       toast.success("Kit created successfully");
-      setFormData({ name: "", externalId: "" });
+      setFormData({ name: "", externalId: "", status: "available" });
       setImagePreview("");
       setSelectedItemIds([]);
       onAdd();
@@ -127,14 +140,32 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
               </div>
             </div>
             <div className="bg-white p-8 rounded-2xl border shadow-sm space-y-6">
-              <div className="space-y-2">
-                <Label className="after:content-['*'] after:ml-0.5 after:text-red-500 font-bold">Name</Label>
-                <Input 
-                  placeholder="e.g. Camera Kit 001" 
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="h-12 text-lg"
-                />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="after:content-['*'] after:ml-0.5 after:text-red-500 font-bold">Kit Name</Label>
+                  <Input 
+                    placeholder="e.g. Camera Kit 001" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="h-12 text-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold">Initial Status</Label>
+                  <Select 
+                    defaultValue="available"
+                    onValueChange={(v) => setFormData({...formData, status: v})}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">Available</SelectItem>
+                      <SelectItem value="incomplete">Incomplete</SelectItem>
+                      <SelectItem value="checked_out">Checked Out</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
@@ -151,7 +182,7 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
               <div className="p-6 border-b flex items-center justify-between bg-slate-50/50">
                 <div>
                   <h4 className="font-bold text-lg">Equipment</h4>
-                  <p className="text-sm text-slate-500">{selectedItemIds.length} items added</p>
+                  <p className="text-sm text-slate-500">{selectedItemIds.length} items added (min. 1 required)</p>
                 </div>
                 <Button 
                    onClick={() => setIsPickingItems(true)}
@@ -168,7 +199,7 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
                       <TableRow>
                         <TableHead className="w-12"></TableHead>
                         <TableHead>Item</TableHead>
-                        <TableHead>Location</TableHead>
+                        <TableHead>Category</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -179,7 +210,7 @@ export function AddKitDialog({ open, onOpenChange, availableEquipment, onAdd }) 
                           <TableRow key={id}>
                             <TableCell><Checkbox checked /></TableCell>
                             <TableCell className="font-bold">{item?.name}</TableCell>
-                            <TableCell className="text-slate-500">{item?.location || "N/A"}</TableCell>
+                            <TableCell className="text-slate-500">{item?.category || "N/A"}</TableCell>
                             <TableCell className="text-right">
                                <Button variant="ghost" size="icon" onClick={() => toggleItem(id)}>
                                  <X className="h-4 w-4 text-red-500" />

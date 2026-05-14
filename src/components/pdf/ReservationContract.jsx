@@ -141,7 +141,7 @@ export const ReservationContract = ({ reservation, items, user }) => (
             <View key={idx} style={styles.row}>
               <Text style={[styles.tableCell, { flex: 2 }]}>{item.name}</Text>
               <Text style={styles.tableCell}>{item.brand} {item.model}</Text>
-              <Text style={styles.tableCell}>{item.externalId || item.barcode || 'N/A'}</Text>
+              <Text style={styles.tableCell}>{item.externalId || 'N/A'}</Text>
             </View>
           ))}
         </View>

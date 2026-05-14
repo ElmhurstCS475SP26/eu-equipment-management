@@ -10,7 +10,10 @@ import NewReservationClient from "./NewReservationClient";
 export const dynamic = "force-dynamic";
 
 export default async function NewReservationPage() {
-  const items = await prisma.item.findMany();
+  const [items, kits] = await Promise.all([
+    prisma.item.findMany(),
+    prisma.kit.findMany({ include: { items: true } })
+  ]);
 
   const equipmentData = items.map((item) => ({
     id: item.id.toString(),
@@ -23,7 +26,23 @@ export default async function NewReservationPage() {
     description: item.description || "",
     quantity: item.quantity || 1,
     quantityAvailable: item.status === "available" ? (item.quantity || 1) : 0,
+    type: 'individual'
   }));
 
-  return <NewReservationClient initialEquipment={equipmentData} />;
+  const kitsData = kits.map(kit => ({
+    id: `kit-${kit.id}`,
+    name: kit.name,
+    category: "Equipment Kit",
+    brand: "Multiple",
+    model: `${kit.items.length} items`,
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1000&auto=format&fit=crop",
+    availability: kit.status === "available" ? "Available" : "Unavailable",
+    description: `A curated set of equipment including: ${kit.items.map(i => i.name).join(", ")}`,
+    quantity: 1,
+    quantityAvailable: kit.status === "available" ? 1 : 0,
+    type: 'kit',
+    itemIds: kit.items.map(i => i.id.toString())
+  }));
+
+  return <NewReservationClient initialEquipment={[...equipmentData, ...kitsData]} />;
 }

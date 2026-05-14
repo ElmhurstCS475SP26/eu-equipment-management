@@ -22,13 +22,13 @@ export async function createItemAction(data) {
         quantity: parseInt(data.quantity, 10) || 1,
         status: "available",
         kind: data.kind || "individual",
-        barcode: data.barcode,
         location: data.location || "DM Checkout",
       },
     });
 
-    revalidatePath("/admin");
+    revalidatePath("/admin", "layout");
     revalidatePath("/catalog");
+
     return { success: true, item };
   } catch (error) {
     console.error("Failed to create item:", error);
@@ -51,17 +51,17 @@ export async function updateItemAction(id, data) {
         model: data.model,
         category: data.category,
         description: data.description,
-        imageUrl: data.imageUrl,
+        imageUrl: data.imageUrl || data.image, // Handle both naming conventions
         quantity: parseInt(data.quantity, 10),
-        status: data.status,
+        status: (data.status || data.availability || "available").toLowerCase(), // Map UI status to DB status
         kind: data.kind,
-        barcode: data.barcode,
         location: data.location,
       },
     });
 
-    revalidatePath("/admin");
+    revalidatePath("/admin", "layout");
     revalidatePath("/catalog");
+
     return { success: true, item };
   } catch (error) {
     console.error("Failed to update item:", error);
@@ -80,8 +80,9 @@ export async function deleteItemAction(id) {
       where: { id: parseInt(id, 10) },
     });
 
-    revalidatePath("/admin");
+    revalidatePath("/admin", "layout");
     revalidatePath("/catalog");
+
     return { success: true };
   } catch (error) {
     console.error("Failed to delete item:", error);
