@@ -6,7 +6,7 @@
  */
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
-import { Calendar, Clock, AlertCircle, Video, Mic, Lightbulb, Camera, ArrowRight } from "lucide-react";
+import { Calendar, Clock, AlertCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,49 +14,159 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+/** Mirror the grouping logic from ReservationsClient so cards match. */
+function groupByBooking(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    const key = r.bookingId || `solo-${r.id}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        bookingId: r.bookingId || null,
+        groupKey: key,
+        status: r.status,
+        pickupDate: r.pickupDate,
+        returnDate: r.returnDate,
+        ids: [],
+        items: [],
+      });
+    }
+    const group = map.get(key);
+    group.ids.push(r.id);
+    group.items.push({
+      id: r.id,
+      equipmentName: r.equipmentName,
+      equipmentImage: r.equipmentImage,
+    });
+  }
+  return Array.from(map.values());
+}
+
+/**
+ * Read-only booking card for the dashboard.
+ * Mirrors the visual layout of ReservationsClient's BookingCard
+ * but omits the cancel / contract actions (those live on /reservations).
+ */
+function DashboardBookingCard({ booking }) {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Active": return "bg-green-100 text-green-700 hover:bg-green-100";
+      case "Upcoming": return "bg-blue-100 text-blue-700 hover:bg-blue-100";
+      default: return "bg-gray-100 text-gray-700 hover:bg-gray-100";
+    }
+  };
+
+  return (
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        {/* Booking ID + status */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <CardDescription className="text-xs font-medium">
+            {booking.bookingId ? `Booking: ${booking.bookingId}` : `Reservation #${booking.ids[0]}`}
+          </CardDescription>
+          <Badge className={getStatusColor(booking.status)}>{booking.status}</Badge>
+        </div>
+
+        {/* Item thumbnails + names — show first 2, then overflow hint */}
+        <div className="space-y-2">
+          {booking.items.slice(0, 2).map((item) => (
+            <div key={item.id} className="flex items-center gap-3">
+              <img
+                src={item.equipmentImage}
+                alt={item.equipmentName}
+                className="h-12 w-12 rounded-lg object-cover bg-gray-50 flex-shrink-0"
+              />
+              <p className="text-sm font-semibold break-words">{item.equipmentName}</p>
+            </div>
+          ))}
+          {booking.items.length > 2 && (
+            <p className="text-xs text-gray-400 pl-1">
+              + {booking.items.length - 2} more item{booking.items.length - 2 !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="flex items-start gap-2">
+            <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pickup</p>
+              <p className="text-sm text-gray-900 font-medium">
+                {new Date(booking.pickupDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                {" • "}
+                {new Date(booking.pickupDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <Clock className="h-4 w-4 text-gray-400 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Return</p>
+              <p className="text-sm text-gray-900 font-medium">
+                {new Date(booking.returnDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                {" • "}
+                {new Date(booking.returnDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function Dashboard() {
   const user = await currentUser();
   const firstName = user?.firstName || 'User';
 
-  let activeReservations = [];
-  let upcomingReservations = [];
+  let activeBookings = [];
+  let upcomingBookings = [];
 
   if (user) {
     const dbUser = await prisma.user.findUnique({
       where: { clerkId: user.id },
       include: {
         reservations: {
-          include: { item: true }
-        }
-      }
+          include: { item: true },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
 
     if (dbUser) {
-      const reservations = dbUser.reservations
-        .filter(r => r.status !== "cancelled")
-        .map(r => ({
-          id: r.id,
-          status: r.status,
-          pickupDate: r.startDate,
-          returnDate: r.endDate,
-          equipmentName: r.item.name,
-          equipmentImage: r.item.imageUrl || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
-          equipmentId_full: r.item.externalId || r.item.id.toString(),
-        }));
-
       const now = new Date();
-      // Active means it's current or already picked up
-      activeReservations = reservations.filter(r => 
-        (r.status === "approved" || r.status === "active") && 
-        new Date(r.pickupDate) <= now && 
-        new Date(r.returnDate) >= now
-      );
-      
-      // Upcoming means approved but start date is in the future
-      upcomingReservations = reservations.filter(r => 
-        (r.status === "approved" || r.status === "active") && 
-        new Date(r.pickupDate) > now
-      );
+
+      // Compute the same display-status logic as reservations/page.jsx
+      const rows = dbUser.reservations
+        .filter((r) => r.status !== "cancelled" && r.status !== "completed" && r.status !== "returned")
+        .map((r) => {
+          let displayStatus = r.status; // 'approved' | 'active' | 'pending'
+          if (r.status === "approved" && new Date(r.startDate) <= now) {
+            displayStatus = "Active";
+          } else if (r.status === "approved" && new Date(r.startDate) > now) {
+            displayStatus = "Upcoming";
+          } else if (r.status === "active") {
+            displayStatus = "Active";
+          }
+          return {
+            id: r.id,
+            bookingId: r.bookingId || null,
+            status: displayStatus,
+            pickupDate: r.startDate,
+            returnDate: r.endDate,
+            equipmentName: r.item.name,
+            equipmentImage:
+              r.item.imageUrl ||
+              "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1080&auto=format&fit=crop",
+          };
+        });
+
+      const activeRows = rows.filter((r) => r.status === "Active");
+      const upcomingRows = rows.filter((r) => r.status === "Upcoming");
+
+      activeBookings = groupByBooking(activeRows);
+      upcomingBookings = groupByBooking(upcomingRows);
     }
   }
 
@@ -76,7 +186,7 @@ export default async function Dashboard() {
             <Calendar className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeReservations.length}</div>
+            <div className="text-2xl font-bold">{activeBookings.length}</div>
             <p className="text-xs text-gray-500 mt-1">Currently checked out</p>
           </CardContent>
         </Card>
@@ -86,7 +196,7 @@ export default async function Dashboard() {
             <Clock className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{upcomingReservations.length}</div>
+            <div className="text-2xl font-bold">{upcomingBookings.length}</div>
             <p className="text-xs text-gray-500 mt-1">Ready to pick up</p>
           </CardContent>
         </Card>
@@ -113,37 +223,10 @@ export default async function Dashboard() {
             </Button>
           </Link>
         </div>
-        {activeReservations.length > 0 ? (
+        {activeBookings.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {activeReservations.map((reservation) => (
-              <Card key={reservation.id}>
-                <CardHeader>
-                  <img
-                    src={reservation.equipmentImage}
-                    alt={reservation.equipmentName}
-                    className="w-full h-40 object-cover rounded-lg mb-3"
-                  />
-                  <CardTitle className="text-lg">{reservation.equipmentName}</CardTitle>
-                  <CardDescription>ID: {reservation.equipmentId_full}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-600">
-                      Pickup: {new Date(reservation.pickupDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-600">
-                      Return: {new Date(reservation.returnDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 mt-2">
-                    {reservation.status}
-                  </Badge>
-                </CardContent>
-              </Card>
+            {activeBookings.map((booking) => (
+              <DashboardBookingCard key={booking.groupKey} booking={booking} />
             ))}
           </div>
         ) : (
@@ -160,32 +243,23 @@ export default async function Dashboard() {
       </div>
 
       {/* Upcoming Reservations */}
-      {upcomingReservations.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Upcoming Pickups</h2>
-          <div className="space-y-3">
-            {upcomingReservations.map((reservation) => (
-              <Card key={reservation.id}>
-                <CardContent className="flex items-center gap-4 p-4">
-                  <img
-                    src={reservation.equipmentImage}
-                    alt={reservation.equipmentName}
-                    className="h-16 w-16 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{reservation.equipmentName}</h3>
-                    <p className="text-sm text-gray-600">
-                      Pickup: {new Date(reservation.pickupDate).toLocaleDateString()} at{" "}
-                      {new Date(reservation.pickupDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <Badge variant="secondary" className="capitalize">{reservation.status}</Badge>
-                </CardContent>
-              </Card>
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Upcoming Pickups</h2>
+        {upcomingBookings.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {upcomingBookings.map((booking) => (
+              <DashboardBookingCard key={booking.groupKey} booking={booking} />
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Clock className="h-12 w-12 text-gray-300 mb-4" />
+              <p className="text-gray-500">No upcoming pickups</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
