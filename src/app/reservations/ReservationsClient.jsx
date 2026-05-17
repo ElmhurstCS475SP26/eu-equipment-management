@@ -169,20 +169,25 @@ export default function ReservationsClient({ initialReservations }) {
             </Badge>
           </div>
 
-          {/* Item thumbnails + names */}
+          {/* Item thumbnails + names — show first 2, then overflow hint */}
           <div className="space-y-2">
-            {booking.items.map((item) => (
+            {booking.items.slice(0, 2).map((item) => (
               <div key={item.id} className="flex items-center gap-3">
                 <img
                   src={item.equipmentImage}
                   alt={item.equipmentName}
                   className="h-12 w-12 rounded-lg object-cover bg-gray-50 flex-shrink-0"
                 />
-                <p className="text-sm font-semibold truncate">
+                <p className="text-sm font-semibold break-words">
                   {item.equipmentName}
                 </p>
               </div>
             ))}
+            {booking.items.length > 2 && (
+              <p className="text-xs text-gray-400 pl-1">
+                + {booking.items.length - 2} more item{booking.items.length - 2 !== 1 ? "s" : ""}
+              </p>
+            )}
           </div>
         </CardHeader>
 
@@ -270,9 +275,9 @@ export default function ReservationsClient({ initialReservations }) {
                 </AlertDialog>
               </div>
             )}
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               className="w-full gap-2 rounded-xl"
               onClick={() => window.open(`/api/reservations/${booking.bookingId || booking.ids[0]}/contract`, '_blank')}
             >
